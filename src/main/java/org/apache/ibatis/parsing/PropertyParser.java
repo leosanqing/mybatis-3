@@ -73,8 +73,10 @@ public class PropertyParser {
 
     @Override
     public String handleToken(String content) {
+      // 判断有没有变量对应的值，其实是个map
       if (variables != null) {
         String key = content;
+        // 如果开启了，那么就根据分隔符取最前面的值 比如 a:b 那么就在 variable map中 get(a)
         if (enableDefaultValue) {
           final int separatorIndex = content.indexOf(defaultValueSeparator);
           String defaultValue = null;
@@ -82,10 +84,12 @@ public class PropertyParser {
             key = content.substring(0, separatorIndex);
             defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
           }
+          // 注意: 如果variables 的里面取不到 key , 那就直接返回后面的值 defaultValue
           if (defaultValue != null) {
             return variables.getProperty(key, defaultValue);
           }
         }
+        // 如果没有开启，就直接全部匹配。没有则返回 ${variable}
         if (variables.containsKey(key)) {
           return variables.getProperty(key);
         }

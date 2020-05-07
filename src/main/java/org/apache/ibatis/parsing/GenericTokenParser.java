@@ -41,11 +41,15 @@ public class GenericTokenParser {
     }
     char[] src = text.toCharArray();
     int offset = 0;
+    // 转换之后的名称 比如 我们 ${name} -> leosanqing ,那么这个builder 就是  leosanqing
     final StringBuilder builder = new StringBuilder();
+    // 这个是表达式所代表变量名  比如 ${name}, 那么 这个 expression 就是 name
     StringBuilder expression = null;
     while (start > -1) {
       if (start > 0 && src[start - 1] == '\\') {
+
         // this open token is escaped. remove the backslash and continue.
+        // 因为 openToken 前面是 转义字符，所以忽略 \
         builder.append(src, offset, start - offset - 1).append(openToken);
         offset = start + openToken.length();
       } else {
@@ -57,23 +61,29 @@ public class GenericTokenParser {
         }
         builder.append(src, offset, start - offset);
         offset = start + openToken.length();
+        // 从 open token 开始往后找 close token 的位置。
         int end = text.indexOf(closeToken, offset);
+        // 如果找到了 close token
         while (end > -1) {
           if (end > offset && src[end - 1] == '\\') {
             // this close token is escaped. remove the backslash and continue.
+            // 这个 close token 是需要转义的，删除反斜杠并继续
             expression.append(src, offset, end - offset - 1).append(closeToken);
             offset = end + closeToken.length();
+            // 再次寻找 close token
             end = text.indexOf(closeToken, offset);
           } else {
             expression.append(src, offset, end - offset);
             break;
           }
         }
+        // 如果没有找到 end token 那么说明前面的 open token 就不能当成是占位符开始。只能当成普通的字符
         if (end == -1) {
           // close token was not found.
           builder.append(src, start, src.length - start);
           offset = src.length;
         } else {
+          // 否则就调用 handleToken 方法，在 handler 里面寻找 该变量所代表的值
           builder.append(handler.handleToken(expression.toString()));
           offset = end + closeToken.length();
         }
