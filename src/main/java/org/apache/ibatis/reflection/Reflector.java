@@ -49,11 +49,25 @@ import org.apache.ibatis.reflection.property.PropertyNamer;
  */
 public class Reflector {
 
+  // 对应的类
   private final Class<?> type;
+  // 可读属性数组
   private final String[] readablePropertyNames;
+  // 可写属性数组
   private final String[] writablePropertyNames;
+  /**
+    set 方法
+    key 属性名
+    value invoker 对象
+   */
   private final Map<String, Invoker> setMethods = new HashMap<>();
+  // get 方法
   private final Map<String, Invoker> getMethods = new HashMap<>();
+  /**
+   * 属性对应的 set 方法的返回类型的映射
+   * key 属性名
+   * value 返回值类型
+   */
   private final Map<String, Class<?>> setTypes = new HashMap<>();
   private final Map<String, Class<?>> getTypes = new HashMap<>();
   private Constructor<?> defaultConstructor;
@@ -62,9 +76,13 @@ public class Reflector {
 
   public Reflector(Class<?> clazz) {
     type = clazz;
+    // 添加默认的无参构造方法
     addDefaultConstructor(clazz);
+    // 添加get方法
     addGetMethods(clazz);
+    // 添加 set 方法
     addSetMethods(clazz);
+    // 添加属性
     addFields(clazz);
     readablePropertyNames = getMethods.keySet().toArray(new String[0]);
     writablePropertyNames = setMethods.keySet().toArray(new String[0]);
@@ -76,12 +94,23 @@ public class Reflector {
     }
   }
 
+  /**
+   * 添加默认的无参构造方法
+   * @param clazz
+   */
   private void addDefaultConstructor(Class<?> clazz) {
     Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+    // 查找无参构造方法
+    // fixme 为啥和之前的不一样。之前的还需要判断是否可访问，不能访问还需要修改访问权限
     Arrays.stream(constructors).filter(constructor -> constructor.getParameterTypes().length == 0)
       .findAny().ifPresent(constructor -> this.defaultConstructor = constructor);
   }
 
+  /**
+   *  添加 get 方法
+   *  将函数名前缀为 get 并且长度大于
+   * @param clazz
+   */
   private void addGetMethods(Class<?> clazz) {
     Map<String, List<Method>> conflictingGetters = new HashMap<>();
     Method[] methods = getClassMethods(clazz);
@@ -90,10 +119,15 @@ public class Reflector {
     resolveGetterConflicts(conflictingGetters);
   }
 
+  /**
+   *  解决get方法冲突问题
+   * @param conflictingGetters
+   */
   private void resolveGetterConflicts(Map<String, List<Method>> conflictingGetters) {
     for (Entry<String, List<Method>> entry : conflictingGetters.entrySet()) {
       Method winner = null;
       String propName = entry.getKey();
+      // 如果这个为 true 就会抛出异常
       boolean isAmbiguous = false;
       for (Method candidate : entry.getValue()) {
         if (winner == null) {
@@ -133,6 +167,7 @@ public class Reflector {
     getTypes.put(name, typeToClass(returnType));
   }
 
+  // 寻找 set方法
   private void addSetMethods(Class<?> clazz) {
     Map<String, List<Method>> conflictingSetters = new HashMap<>();
     Method[] methods = getClassMethods(clazz);
@@ -225,6 +260,7 @@ public class Reflector {
   private void addFields(Class<?> clazz) {
     Field[] fields = clazz.getDeclaredFields();
     for (Field field : fields) {
+      // 如果 get 或者 set 方法中 没有对这个字段的相应方法，那么就自己生成get set方法并添加到相应的数组中
       if (!setMethods.containsKey(field.getName())) {
         // issue #379 - removed the check for final because JDK 1.5 allows
         // modification of final fields through reflection (JSR-133). (JGB)
@@ -275,13 +311,18 @@ public class Reflector {
   private Method[] getClassMethods(Class<?> clazz) {
     Map<String, Method> uniqueMethods = new HashMap<>();
     Class<?> currentClass = clazz;
+    // 从调用类开始，一直往上寻找get方法，直到Object类。并添加到 uniqueMethods数组
     while (currentClass != null && currentClass != Object.class) {
       addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
 
       // we also need to look for interface methods -
       // because the class may be abstract
+      // 因为如果他是抽象方法，就不会再去往上找接口，调试可以看出来.
+      // 找到AbstractEntity之后，不会再去找 Entity。
+      // 因为下面的 getSuperclass找到的上级类是Object
       Class<?>[] interfaces = currentClass.getInterfaces();
       for (Class<?> anInterface : interfaces) {
+
         addUniqueMethods(uniqueMethods, anInterface.getMethods());
       }
 
@@ -295,7 +336,9 @@ public class Reflector {
 
   private void addUniqueMethods(Map<String, Method> uniqueMethods, Method[] methods) {
     for (Method currentMethod : methods) {
+      // 排除桥接方法，这个东西是什么可以参考 知乎的这篇文章 https://www.zhihu.com/question/54895701
       if (!currentMethod.isBridge()) {
+        // signature 格式为  返回值#方法名:输入参数名
         String signature = getSignature(currentMethod);
         // check to see if the method is already known
         // if it is known, then an extended class must have
