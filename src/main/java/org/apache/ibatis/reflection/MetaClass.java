@@ -54,6 +54,10 @@ public class MetaClass {
   }
 
   public String findProperty(String name, boolean useCamelCaseMapping) {
+    // 如果使用 驼峰式命名的map，就把下划线去掉。
+    // 为什么这样做，他是用的是把把名称转成大写，所以只需要去掉下划线就行
+    // 可以看 Reflector类中的 findPropertyName 方法
+    //
     if (useCamelCaseMapping) {
       name = name.replace("_", "");
     }
@@ -93,9 +97,16 @@ public class MetaClass {
     return MetaClass.forClass(propType, reflectorFactory);
   }
 
+  /**
+   * 获取get方法的类型
+   * @param prop
+   * @return
+   */
   private Class<?> getGetterType(PropertyTokenizer prop) {
     Class<?> type = reflector.getGetterType(prop.getName());
+    // 他是一个集合类,并且index 属性不为空
     if (prop.getIndex() != null && Collection.class.isAssignableFrom(type)) {
+      // 先找出他的集合类
       Type returnType = getGenericGetterType(prop.getName());
       if (returnType instanceof ParameterizedType) {
         Type[] actualTypeArguments = ((ParameterizedType) returnType).getActualTypeArguments();

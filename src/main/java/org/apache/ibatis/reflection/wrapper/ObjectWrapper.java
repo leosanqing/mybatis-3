@@ -26,10 +26,21 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
  */
 public interface ObjectWrapper {
 
+  /**
+   * 获取对象，
+   * @param prop
+   * @return
+   */
   Object get(PropertyTokenizer prop);
 
   void set(PropertyTokenizer prop, Object value);
 
+  /**
+   *
+   * @param name
+   * @param useCamelCaseMapping
+   * @return
+   */
   String findProperty(String name, boolean useCamelCaseMapping);
 
   String[] getGetterNames();

@@ -21,9 +21,13 @@ import java.util.Iterator;
  * @author Clinton Begin
  */
 public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
+  // 如果是集合,去掉后面索引的名字  如 list[1]，name 就是list
   private String name;
+  // 完整的名字,如 list[1]，那这个 indexedName 就是list[1]
   private final String indexedName;
+  // 如果是集合类,下标 如  list[0],index 就是 0
   private String index;
+  // 如输入的是  Children.name. children 就是name 否则为null
   private final String children;
 
   public PropertyTokenizer(String fullname) {

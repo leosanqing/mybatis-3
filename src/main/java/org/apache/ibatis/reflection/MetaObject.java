@@ -125,6 +125,7 @@ public class MetaObject {
 
   public void setValue(String name, Object value) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
+    // 有 children，就一直往下找，因为set的是最底层的那个类的属性
     if (prop.hasNext()) {
       MetaObject metaValue = metaObjectForProperty(prop.getIndexedName());
       if (metaValue == SystemMetaObject.NULL_META_OBJECT) {

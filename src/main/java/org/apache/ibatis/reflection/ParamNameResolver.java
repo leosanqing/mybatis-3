@@ -67,6 +67,7 @@ public class ParamNameResolver {
         continue;
       }
       String name = null;
+      // 最优 从 Param中获取参数名
       for (Annotation annotation : paramAnnotations[paramIndex]) {
         if (annotation instanceof Param) {
           hasParamAnnotation = true;
@@ -74,11 +75,13 @@ public class ParamNameResolver {
           break;
         }
       }
+      // 其次获取真实的参数名，用参数名作为名字
       if (name == null) {
         // @Param was not specified.
         if (useActualParamName) {
           name = getActualParamName(method, paramIndex);
         }
+        // 最差使用 map的顺序作为名字
         if (name == null) {
           // use the parameter index as the name ("0", "1", ...)
           // gcode issue #71

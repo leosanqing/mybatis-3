@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RichType {
+public class RichType<T> {
 
   private RichType richType;
 
@@ -29,6 +29,16 @@ public class RichType {
   private String richProperty;
 
   private Map richMap = new HashMap();
+
+  private List<T> test;
+
+  public List<T> getTest() {
+    return test;
+  }
+
+  public void setTest(List<T> test) {
+    this.test = test;
+  }
 
   private List richList = new ArrayList() {
     {

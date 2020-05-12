@@ -42,7 +42,9 @@ public class JdbcTransaction implements Transaction {
 
   protected Connection connection;
   protected DataSource dataSource;
+  // 事务隔离级别
   protected TransactionIsolationLevel level;
+  // 是否自动提交
   protected boolean autoCommit;
 
   public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
